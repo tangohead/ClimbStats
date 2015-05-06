@@ -1,20 +1,22 @@
+var dir_disp = null;
+var markers = null;
 $(document).ready(function(){
 	function initialize() {
         var mapOptions = {
           center: { lat: 53.54, lng: -2.63},
           zoom: 8
         };
-        var dir_disp = new google.maps.DirectionsRenderer();
+        dir_disp = new google.maps.DirectionsRenderer();
 
         var map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
 
-        var markers = new Array();
+        markers = new Array();
 
         dir_disp.setMap(map);
 
         //Listen to the map click events and add markers
         google.maps.event.addListener(map, 'click', function(mouse_pos){
-        	create_marker(map, dir_disp, mouse_pos.latLng, markers);
+        	create_marker(map, mouse_pos.latLng);
         	console.log(markers);
         });
 
@@ -24,7 +26,8 @@ $(document).ready(function(){
 });
 
 
-function create_marker(map, dir_disp, latLng, markers){
+function create_marker(map, latLng){
+    console.log("marker created");
 	var marker = new google.maps.Marker({
     		position: latLng,
     		map:map,
@@ -38,14 +41,36 @@ function create_marker(map, dir_disp, latLng, markers){
     if(markers.length > 1)
     {
     	var dir_srv = new google.maps.DirectionsService();
+        console.log("Markers currently set");
+        console.log(markers);
 
     	//Create request
+        console.log(markers[0].getPosition());
     	dir_req = {
     		origin : markers[0].getPosition(),
-    		destination : markers[1].getPosition(),
+    		destination : markers[markers.length - 1].getPosition(),
     		travelMode : google.maps.TravelMode.BICYCLING,
     		unitSystem : google.maps.UnitSystem.Metric,
    		};
+
+        //If we've got waypoints, then we need to put the waypoints in
+        if(markers.length > 2)
+        {
+            console.log("Calculating waypoints");
+            var waypoints = new Array();
+
+            for(var i=1; i < markers.length-1; i++)
+            {
+                console.log(markers[i].getPosition());
+                waypoints.push(new google.maps.DirectionsWaypoint({
+                    location: markers[i].getPosition(),
+                    stopover: false
+                })
+                );
+            }
+            console.log(waypoints);
+            dir_req.waypoints = waypoints;
+        }
 
    		dir_srv.route(dir_req, function(result, status){
    			if(status == google.maps.DirectionsStatus.OK){
