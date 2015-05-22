@@ -153,7 +153,7 @@ function draw_elevation_profile(elevation_profile)
     var width = 1100;
     var height = 400;
 
-    var m = [10, 10, 10, 10],
+    var m = [20, 50, 50, 20],
         w = width - m[1] - m[3],
         h = height - m[0] - m[2];
 
@@ -165,11 +165,21 @@ function draw_elevation_profile(elevation_profile)
 
     var elev_scale = d3.scale.linear()
                         .domain(d3.extent(elevation_profile.map(function (obj) { return obj['elevation'] } )))
-                        .range([0, h]),
+                        .range([h, 0]),
         //Change the dist scale to work out from coords
         dist_scale = d3.scale.linear()
                         .domain([0, elevation_profile.length])
                         .range([0, w]);
+
+    var x_axis = d3.svg.axis()
+                    .scale(dist_scale)
+                    .tickSize(5)
+                    .tickSubdivide(true),
+        y_axis = d3.svg.axis()
+                    .scale(elev_scale)
+                    .orient('left')
+                    .tickSize(5)
+                    .tickSubdivide(true);
 
     var elev_line = d3.svg.line()
                         .x(function(d){
@@ -185,6 +195,19 @@ function draw_elevation_profile(elevation_profile)
                         .append('svg:path')
                         .attr('d', elev_line(seq_elevation_profiles))
                         .attr('class', 'dataline');
+
+
+    //Draw scales
+    svg.append('svg:g')
+        .attr('class', 'axis')
+        .attr('id', 'x_axis')
+        .attr('transform', 'translate(0, ' + (height - m[3]) + ')')
+        .call(x_axis);
+    svg.append('svg:g')
+        .attr('class', 'axis')
+        .attr('id', 'y_axis')
+        .attr('transform', 'translate(' + (m[1]) + ',0)')
+        .call(y_axis);
 
 
     function path(d){
