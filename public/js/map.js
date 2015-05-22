@@ -139,5 +139,62 @@ function retrieve_elevation(path)
 
 function draw_elevation_profile(elevation_profile)
 {
-    console.log(elevation_profile);
+    //console.log(elevation_profile);
+
+    //We need to attach a sequence number to each elev point for now 
+    //so we can plot it on the x axis
+    var seq_elevation_profiles = Array();
+    for(var i = 0; i < elevation_profile.length; i++)
+        seq_elevation_profiles.push({
+            elevation_point: elevation_profile[i],
+            sequence_no: i 
+        });
+
+    var width = 1100;
+    var height = 400;
+
+    var m = [10, 10, 10, 10],
+        w = width - m[1] - m[3],
+        h = height - m[0] - m[2];
+
+    var svg = d3.select('#chart-canvas').append('svg')
+                .attr('width', width)
+                .attr('height', height);
+
+    //console.log(seq_elevation_profiles);
+
+    var elev_scale = d3.scale.linear()
+                        .domain(d3.extent(elevation_profile.map(function (obj) { return obj['elevation'] } )))
+                        .range([0, h]),
+        //Change the dist scale to work out from coords
+        dist_scale = d3.scale.linear()
+                        .domain([0, elevation_profile.length])
+                        .range([0, w]);
+
+    var elev_line = d3.svg.line()
+                        .x(function(d){
+                            return dist_scale(d.sequence_no);
+                        })
+                        .y(function(d){
+                            return elev_scale(d.elevation_point['elevation']);
+                        })
+                        .interpolate('linear');
+
+    var foreground = svg.append('svg:g')
+                        .attr('class', 'foreground')
+                        .append('svg:path')
+                        .attr('d', elev_line(seq_elevation_profiles))
+                        .attr('class', 'dataline');
+
+
+    function path(d){
+        return d3.svg.line(
+            seq_elevation_profiles.map(function(seq_elev_point) 
+            {   
+                console.log(seq_elev_point);
+                return [dist_scale(seq_elev_point.sequence_no), elev_scale(seq_elev_point.elevation_point['elevation'])]; 
+
+            }));
+    }
+
 }

@@ -5,3 +5,10 @@
 #map-container{
 	height:400px;
 }
+
+.dataline
+{
+	stroke:#000;
+	stroke-width: 2px;
+	fill: none;
+}
