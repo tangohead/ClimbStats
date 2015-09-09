@@ -34,25 +34,88 @@ function preprocess_data(elevation_profile)
         //ASSIGN HERE!!
         seq_elevation_profiles.push(temp_prof_point);
     }
+
+    seq_elev_profiles = calculate_grade(seq_elevation_profiles);
+    console.log(seq_elevation_profiles);
+    smooth_grade_groups(seq_elevation_profiles, 20);
     return seq_elevation_profiles;
 }
 
+function smooth_grade_groups(elev_points, group_size)
+{
+    for(var i = 0; i < elev_points.length - group_size; i=i+group_size)
+    {
+        console.log(i);
+        var group_avg_grade = calculate_avg_grade(elev_points.slice(i, i+group_size));
+        for(var j = 0; j < group_size; j++)
+        {
+            console.log(i + j);
+            elev_points[i+j].adj_grade = group_avg_grade;
+        }
+    }
+    //Check if we have leftover elements
+    if((elev_points.length) % group_size != 0)
+    {
+        //If so, figure out where we left off and fill the rest in
+        var start_index = Math.floor(elev_points.length / group_size);
+        var group_avg_grade = calculate_avg_grade(elev_points.slice(start_index, elev_points.length));
+        for(var i = start_index; i < elev_points.length; i++)
+        {
+            elev_points[i].adj_grade = group_avg_grade;
+        }
+    }
+    console.log(elev_points);
+}
+
+function smooth_grade_similarity(elev_points, granularity)
+{
+    //TODO: Smooth gradient based on similarity
+    //TODO: Allow user to select granularity of similarity
+
+    
+}
+
+/**
+ * Calculates the point-to-point gradient of the points
+ * @param {array} List of elevation points
+ * @return List of elevation points each with a gradient field
+ */
 function calculate_grade(elev_points)
 {
-	var diffs = new Array();
 	var avg = 0;
 
 	//So here, we have longitude, latitude and elevation
 	//From this, we need to calculate the gradient and return it
 	for(var i=0; i< elev_points.length - 1; i++)
 	{
-		diffs.push(elev_points[i] - elev_points[i+1]);
+        //get the diff between the two elevation points
+		elev_points[i].grade = elev_points[i+1].elevation_point
+            .elevation - elev_points[i].elevation_point
+        .elevation;
 	}
+    //Bit of a hack, set the final grade to be the grade of the prev point
+    elev_points[elev_points.length-1].grade = elev_points[elev_points.length-2].grade;
+    return elev_points;
+}
 
-	for(var i=0; i < diffs.length; i++)
-		avg += diffs[i];
 
-	avg /= diffs.length;
+/**
+ * Calculates the average gradient over a series of points
+ * @param {array} List of elevation points
+ * @return Average gradient
+ */
+function calculate_avg_grade(elev_points)
+{
+    //Check if gradient calc has already been run on them
+    if(!'grade' in elev_points[0])
+        elev_points = calculate_grade(elev_points);
+
+    var avg = 0;
+    //Average them out
+	for(var i=0; i < elev_points.length; i++)
+		avg += elev_points[i].grade;
+
+	avg /= elev_points.length;
 	return avg;
 }
 
