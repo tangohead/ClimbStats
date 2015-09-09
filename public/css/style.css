@@ -18,3 +18,36 @@
 	fill:none;
 	stroke-width:0.5px;
 }
+
+.area{
+	fill:lightsteelblue;
+	stroke-width: 0;
+}
+.grade_-1{
+	fill:cyan;
+	stroke-width: 0;
+}
+.grade_-2{
+	fill:blue;
+	stroke-width: 0;
+}
+.grade_-3{
+	fill:purple;
+	stroke-width: 0;
+}
+.grade_0{
+	fill:green;
+	stroke-width: 0;
+}
+.grade_1{
+	fill:yellow;
+	stroke-width: 0;
+}
+.grade_2{
+	fill:orange;
+	stroke-width: 0;
+}
+.grade_3{
+	fill:red;
+	stroke-width: 0;
+}

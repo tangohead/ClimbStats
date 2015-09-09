@@ -35,23 +35,28 @@ function preprocess_data(elevation_profile)
         seq_elevation_profiles.push(temp_prof_point);
     }
 
-    seq_elev_profiles = calculate_grade(seq_elevation_profiles);
-    console.log(seq_elevation_profiles);
-    smooth_grade_groups(seq_elevation_profiles, 20);
+    seq_elev_profiles = smooth_grade_groups(calculate_grade(seq_elevation_profiles), 20);
+    // console.log(seq_elevation_profiles);
+    // smooth_grade_groups(seq_elevation_profiles, 20);
     return seq_elevation_profiles;
 }
 
 function smooth_grade_groups(elev_points, group_size)
 {
+    //This makes it easier to figure out which group each is in
+    var group_counter = 0;
+
+    //We want to go through each group, get the avg grade for each 
     for(var i = 0; i < elev_points.length - group_size; i=i+group_size)
     {
-        console.log(i);
+        //Then set the adjusted grade for each
         var group_avg_grade = calculate_avg_grade(elev_points.slice(i, i+group_size));
         for(var j = 0; j < group_size; j++)
         {
-            console.log(i + j);
             elev_points[i+j].adj_grade = group_avg_grade;
+            elev_points[i+j].grade_group = group_counter;
         }
+        group_counter++;
     }
     //Check if we have leftover elements
     if((elev_points.length) % group_size != 0)
@@ -62,6 +67,7 @@ function smooth_grade_groups(elev_points, group_size)
         for(var i = start_index; i < elev_points.length; i++)
         {
             elev_points[i].adj_grade = group_avg_grade;
+            elev_points[i].grade_group = group_counter;
         }
     }
     console.log(elev_points);
@@ -130,10 +136,11 @@ function draw_elevation_profile(elevation_profile)
                 .attr('width', width)
                 .attr('height', height);
 
-    //console.log(seq_elevation_profiles);
+    console.log(seq_elevation_profiles);
+    var elev_domain = d3.extent(elevation_profile.map(function (obj) { return obj['elevation'] } ));
 
     var elev_scale = d3.scale.linear()
-                        .domain(d3.extent(elevation_profile.map(function (obj) { return obj['elevation'] } )))
+                        .domain(elev_domain)
                         .range([h+m[0], m[0]]),
         //Change the dist scale to work out from coords
         dist_scale = d3.scale.linear()
@@ -150,6 +157,7 @@ function draw_elevation_profile(elevation_profile)
                     .orient('left')
                     .tickSize(5)
                     .tickSubdivide(true);
+  
 
     var elev_line = d3.svg.line()
                         .x(function(d){
@@ -159,12 +167,24 @@ function draw_elevation_profile(elevation_profile)
                             return elev_scale(d.elevation_point['elevation']);
                         })
                         .interpolate('linear');
+    console.log(elev_scale);
+    var area = d3.svg.area()
+                   .x(function(d){return dist_scale(d.sequence_no)})
+                   .y0(function(d){return elev_scale(elev_domain[0])})
+                   .y1(function(d){return elev_scale(d.elevation_point['elevation'])});
 
     var foreground = svg.append('svg:g')
                         .attr('class', 'foreground')
                         .append('svg:path')
                         .attr('d', elev_line(seq_elevation_profiles))
                         .attr('class', 'dataline');
+    var areas = svg.append('svg:g')
+                        .append('svg:path')
+                        .datum(seq_elevation_profiles.slice(0,20))
+                        .attr('d', area)
+                        .attr('class', 'area_' + Math.round(d.adj_grade));
+    //Need to figure out how to plot areas point-to-point, rather than for some fixed set 
+    //of data
 
 
     //Draw scales
